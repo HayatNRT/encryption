@@ -1,248 +1,269 @@
-# AES Encryption & Data Protection Documentation Pack
 
-## **Document Index**
+# 🔐 Spring Boot Starter – Data Encryption
 
-1. Executive Summary (Non-Technical)
-2. Technical Architecture & Implementation Details
-3. Security Model & Compliance Readiness
-4. Data Flow & Integration Blueprint
-5. Risk Assessment, Key Management, and Governance Model
-6. Implementation Checklist & Future Enhancements
+**Artifact:** `spring-boot-starter-data-encryption`
+**Group ID:** `org.spring.hayat`
+**Version:** `2.0.4`
 
 ---
 
-## **1. Executive Summary (Non-Technical Overview)**
+## 📘 Overview
 
-### **Purpose**
+`spring-boot-starter-data-encryption` is a **plug-and-play Spring Boot starter** that enables **automatic field-level encryption and decryption** for JPA entities.
+It helps secure sensitive data at rest using **AES encryption**, with full **auto-configuration** support — no manual setup required.
 
-This AES Encryption component ensures that **sensitive application data remains confidential**, even if the database is compromised. The encryptor acts as a **data protection layer** between the application and its persistence storage.
-
-### **Business Impact**
-
-* **Protects confidential business information** such as credentials, tokens, and client data.
-* **Reduces data breach risk** by ensuring any stolen data is unreadable.
-* **Supports compliance** with data privacy laws (GDPR, HIPAA, ISO 27001, SOC 2).
-* **Enhances brand reputation** by demonstrating strong security maturity.
-
-### **Simplified Analogy**
-
-Imagine placing a valuable document into a digital safe before sending it to storage. Only authorized systems with the correct key can unlock the safe and read its content.
+This starter is designed for real-world enterprise environments where **data security, encryption key lifecycle management, and maintenance safety** are top priorities.
 
 ---
 
-## **2. Technical Architecture & Implementation Details**
+## ⚙️ Dependency Setup
 
-### **Component Overview**
+Add the following dependency to your Maven `pom.xml`:
 
-The `AesEncryptor` implements the JPA `AttributeConverter<Object, String>` interface, automatically encrypting and decrypting entity attributes during persistence.
+```xml
+<dependency>
+    <groupId>org.spring.hayat</groupId>
+    <artifactId>spring-boot-starter-data-encryption</artifactId>
+    <version>2.0.4</version>
+</dependency>
+```
 
-**Core Responsibilities:**
+---
 
-* Convert objects to encrypted Base64 strings before saving to DB.
-* Convert encrypted Base64 strings back to objects when reading from DB.
+## 🔧 Configuration Properties
 
-### **Encryption Pipeline**
+| Property                             | Type      | Description                                                                                | Required                 |
+| ------------------------------------ | --------- | ------------------------------------------------------------------------------------------ | ------------------------ |
+| `spring.nrt-encryption.enabled`      | `boolean` | Enables the encryption starter’s auto-configuration.                                       | ✅ Yes                    |
+| `spring.nrt-encryption.package-scan` | `string`  | Base package path to scan for encryptable entities. Required when performing key rotation. | ⚙️ Only for key rotation |
 
-**1. Serialization:** Converts the Java object into a binary form.
-**2. Encryption:** Uses AES algorithm with a symmetric secret key.
-**3. Encoding:** Encodes binary ciphertext into Base64 for DB compatibility.
+### Example:
 
-### **Code Summary**
+```properties
+spring.nrt-encryption.enabled=true
+spring.nrt-encryption.package-scan=org.spring.nrt.entity
+```
 
-* **Algorithm:** AES (Advanced Encryption Standard)
-* **Encryption Key:** Injected securely via `${aes.encryption.key}`
-* **Libraries:** `javax.crypto.Cipher`, `SecretKeySpec`, `SerializationUtils`
-* **Storage Format:** Base64 encoded string
+---
 
-### **Lifecycle Operations**
+## 🧱 Core Components
 
-**Persist Operation:**
+### 1. **`@Convert(converter = AesEncryption.class)`**
+
+Mark any entity field you want to encrypt with this annotation.
 
 ```java
-convertToDatabaseColumn(Object attribute) → encrypt → Base64 encode → store in DB
+@Entity
+public class Customer extends EncryptableEntity {
+
+    @Id
+    private Long id;
+
+    @Convert(converter = AesEncryption.class)
+    private String aadhaarNumber;
+
+    @Convert(converter = AesEncryption.class)
+    private String panNumber;
+}
 ```
 
-**Fetch Operation:**
+🔒 These annotated fields are automatically **encrypted when persisted** and **decrypted when retrieved**.
+
+---
+
+### 2. **`EncryptableEntity` (Base Class)**
+
+Every entity containing encrypted fields **must extend** this base class.
+It provides the internal hooks for encryption and decryption processes.
 
 ```java
-convertToEntityAttribute(String dbData) → Base64 decode → decrypt → deserialize
+public class Customer extends EncryptableEntity {
+    ...
+}
 ```
 
-### **Thread Safety & Optimization**
-
-* A new `Cipher` instance is recommended per transaction to ensure thread safety.
-* The key should be cached using a secure Key Management Service (KMS).
-* Avoid using static cipher instances in multi-threaded environments.
-
 ---
 
-## **3. Security Model & Compliance Readiness**
+### 3. **`EncryptionRepository<T, ID>`**
 
-### **Encryption Strength**
-
-* **Algorithm:** AES-256 (recommended)
-* **Mode:** AES/GCM/NoPadding — provides both confidentiality & integrity.
-* **IV (Initialization Vector):** 12-byte random IV generated per encryption operation.
-* **Authentication Tag:** 16 bytes — ensures message integrity.
-
-### **Key Management**
-
-* Keys must be managed externally (e.g., AWS KMS, Azure Key Vault, HashiCorp Vault).
-* The encryption key must never be committed to version control.
-* Rotation policy: keys rotated every 6–12 months.
-* Old data re-encrypted during key rotation window.
-
-### **Compliance & Audit**
-
-| Regulation | How It’s Addressed                        |
-| ---------- | ----------------------------------------- |
-| GDPR       | Personal data encrypted at rest           |
-| HIPAA      | PHI protected during persistence          |
-| ISO 27001  | Data-at-rest control applied              |
-| SOC 2      | Access control and encryption implemented |
-
-### **Data Masking & Access Control**
-
-* Data masked in logs and debugging outputs.
-* Only system-level services decrypt data.
-* Audit logs must record encryption/decryption events for critical fields.
-
----
-
-## **4. Data Flow & Integration Blueprint**
-
-### **End-to-End Flow**
-
-```
-[Entity Attribute] → [AesEncryptor.convertToDatabaseColumn()] → [Cipher Initialization] →
-[Data Encrypted with AES-GCM] → [Base64 Encoded] → [Stored in DB]
-
-(Database Read)
-[Base64 Decoded] → [Decrypted via Cipher] → [Deserialized Object] → [Returned to Entity]
-```
-
-### **Integration Points**
-
-* JPA / Hibernate intercepts entity field conversions automatically.
-* Seamless with Spring Boot’s dependency injection for key management.
-* Optional integration with enterprise KMS APIs for dynamic key retrieval.
-
-### **Error Handling & Failover**
-
-* Graceful fallback if decryption fails (logs event with trace ID, avoids app crash).
-* Implement retry logic for temporary KMS or configuration service failures.
-
----
-
-## **5. Risk Assessment, Key Management, and Governance Model**
-
-### **Risk Categories & Mitigation**
-
-| Risk                        | Description                        | Mitigation Strategy                                   |
-| --------------------------- | ---------------------------------- | ----------------------------------------------------- |
-| Weak Cipher Mode            | Using ECB mode can leak patterns   | Enforce AES/GCM or AES/CBC with IV                    |
-| Key Leakage                 | Developer accidentally commits key | Externalize key via KMS/Env Vars                      |
-| Serialization Vulnerability | Java object injection attack       | Replace Java serialization with JSON-based encryption |
-| Thread Safety               | Cipher reuse in concurrent threads | Create per-thread Cipher instances                    |
-| Data Loss                   | Lost key means permanent data loss | Backup keys securely with versioning                  |
-
-### **Governance Model**
-
-* Centralized **Security Policy Document** governs key usage and access.
-* **Dual Authorization** required for key rotation or regeneration.
-* **Audit Review Cycles** every quarter to validate encryption posture.
-
----
-
-## **6. Implementation Checklist & Future Enhancements**
-
-### **Pre-Deployment Checklist**
-
-* [ ] Use AES-256 with GCM mode.
-* [ ] Generate random IV for each encryption operation.
-* [ ] Implement secure key retrieval via KMS.
-* [ ] Enforce key rotation policy.
-* [ ] Enable encryption metrics in logs.
-* [ ] Conduct code-level penetration testing.
-* [ ] Document the encryption/decryption process in onboarding guide.
-
-### **Post-Deployment Monitoring**
-
-* Monitor encryption/decryption failures.
-* Log and alert on unauthorized access attempts.
-* Regularly rotate keys and re-encrypt legacy data.
-
-### **Future Enhancements**
-
-* Implement envelope encryption (data key + master key).
-* Integrate HSM (Hardware Security Module) for tamper-proof key storage.
-* Support field-level encryption policies via annotations.
-* Provide audit dashboard for encryption coverage.
-
----
-
-## **Appendix: Enterprise-Ready Code Snippet Example (AES-GCM)**
+A custom repository that replaces `JpaRepository` and ensures that all CRUD operations are encryption-aware.
 
 ```java
-public class EnterpriseAesEncryptor implements AttributeConverter<String, String> {
+public interface CustomerRepository extends EncryptionRepository<Customer, Long> {
+}
+```
 
-    @Value("${aes.encryption.key}")
-    private String encryptionKey;
+This repository layer manages encryption/decryption transparently during persistence operations.
 
-    private static final String CIPHER_TRANSFORMATION = "AES/GCM/NoPadding";
-    private static final int GCM_TAG_LENGTH = 128;
-    private static final int IV_LENGTH = 12;
+---
 
-    @Override
-    public String convertToDatabaseColumn(String attribute) {
-        if (attribute == null) return null;
-        try {
-            byte[] iv = new byte[IV_LENGTH];
-            new SecureRandom().nextBytes(iv);
-            Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
-            SecretKeySpec keySpec = new SecretKeySpec(encryptionKey.getBytes(), "AES");
-            GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
+### 4. **`@MaintenanceLock`**
 
-            byte[] cipherText = cipher.doFinal(attribute.getBytes(StandardCharsets.UTF_8));
+`@MaintenanceLock` is a critical annotation designed to **prevent accidental writes to the database during maintenance mode**, such as **key rotation or bulk re-encryption**.
 
-            byte[] finalData = ByteBuffer.allocate(iv.length + cipherText.length)
-                                         .put(iv)
-                                         .put(cipherText)
-                                         .array();
-            return Base64.getEncoder().encodeToString(finalData);
+It ensures data remains **consistent, stable, and uncorrupted** while encryption keys are being updated.
 
-        } catch (Exception e) {
-            throw new IllegalStateException("Error during encryption", e);
-        }
+```java
+@Service
+public class CustomerService {
+
+    @MaintenanceLock
+    public void updateSensitiveData() {
+        // Any write or update to DB
+    }
+}
+```
+
+#### 💡 How It Works
+
+* When the system enters **maintenance mode** (e.g., during `reEncryptAll()`),
+  `@MaintenanceLock` ensures **no database writes** occur.
+* This prevents inconsistent or partially encrypted records.
+* Once the re-encryption completes, normal DB operations automatically resume.
+
+✅ Apply it to:
+
+* Service methods performing DB writes
+* Scheduler or batch operations
+* WebSocket handlers writing data to DB
+
+---
+
+## 🔑 Encryption Key Lifecycle
+
+### 1. **Key Initialization**
+
+When `spring.nrt-encryption.enabled=true`:
+
+* The system checks if an encryption key already exists in the database.
+* If absent, a new key is securely generated and stored.
+* This key is then automatically loaded into the encryption context for all operations.
+
+---
+
+## 🔄 Key Rotation (Re-Encryption)
+
+To ensure long-term data security, this starter supports **key rotation** — securely replacing the old key with a new one and **re-encrypting all existing data**.
+
+### 🧩 Prerequisite
+
+Define the base entity package in your configuration:
+
+```properties
+spring.nrt-encryption.package-scan=org.spring.nrt.entity
+```
+
+This enables the system to **dynamically discover all encryptable entities** for re-encryption.
+
+### 🔹 Usage
+
+```java
+@Autowired
+private EncryptionKeyService encryptionKeyService;
+
+public void rotateKeys() {
+    encryptionKeyService.reEncryptAll();
+}
+```
+
+### 🔹 Internal Workflow
+
+1. The system scans all entities within the configured package.
+2. Decrypts existing encrypted fields using the **old key**.
+3. Generates a new AES key and persists it in the database.
+4. Re-encrypts all data using the new key.
+5. Locks all write operations during this process via `@MaintenanceLock` to maintain **data consistency**.
+
+⚠️ **Important:**
+Run `reEncryptAll()` only during a **maintenance window** or when user write operations are minimal.
+
+---
+
+## 🪄 Auto-Configuration Flow
+
+When `spring.nrt-encryption.enabled=true`:
+
+1. Auto-configuration triggers the encryption context setup.
+2. Beans for AES encryption, key management, and repository support are registered.
+3. The encryption key is verified or generated in the database.
+4. `@MaintenanceLock` interceptor is initialized to enforce safe DB operations during maintenance.
+5. Repositories extending `EncryptionRepository` become fully encryption-aware.
+
+---
+
+## ✅ Example Usage
+
+```java
+@Service
+public class CustomerService {
+
+    private final CustomerRepository repository;
+    private final EncryptionKeyService encryptionKeyService;
+
+    public CustomerService(CustomerRepository repository, EncryptionKeyService encryptionKeyService) {
+        this.repository = repository;
+        this.encryptionKeyService = encryptionKeyService;
     }
 
-    @Override
-    public String convertToEntityAttribute(String dbData) {
-        if (dbData == null) return null;
-        try {
-            byte[] decoded = Base64.getDecoder().decode(dbData);
-            ByteBuffer buffer = ByteBuffer.wrap(decoded);
-            byte[] iv = new byte[IV_LENGTH];
-            buffer.get(iv);
-            byte[] cipherText = new byte[buffer.remaining()];
-            buffer.get(cipherText);
+    @MaintenanceLock
+    public void saveCustomer(Customer customer) {
+        repository.save(customer);
+    }
 
-            Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
-            SecretKeySpec keySpec = new SecretKeySpec(encryptionKey.getBytes(), "AES");
-            GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-            cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec);
+    public List<Customer> getAllCustomers() {
+        return repository.findAll();
+    }
 
-            return new String(cipher.doFinal(cipherText), StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            throw new IllegalStateException("Error during decryption", e);
-        }
+    @MaintenanceLock
+    public void rotateEncryptionKey() {
+        // Perform key rotation safely
+        encryptionKeyService.reEncryptAll();
     }
 }
 ```
 
 ---
 
-### **Conclusion**
+## 🧩 Advantages
 
-This enhanced AES Encryption implementation and documentation align with **enterprise security frameworks**, support **future scalability**, and demonstrate a **compliance-ready encryption posture**. It transforms basic encryption logic into a **production-grade, auditable, and regulatory-compliant system** that strengthens overall data security maturity.
+* 🔒 **AES encryption** for sensitive entity fields
+* ⚙️ **Zero configuration setup** — just one property
+* 🧠 **Automatic key generation and storage**
+* 🔄 **Seamless key rotation** with re-encryption support
+* 📦 **Dynamic entity scanning** for re-encryption
+* 🚫 **`@MaintenanceLock` prevents accidental DB writes during maintenance**
+* 🧱 Compatible with all Spring Boot JPA-based projects
+
+---
+
+## ⚙️ Best Practices
+
+* Always configure `spring.nrt-encryption.package-scan` before key rotation.
+* Schedule `reEncryptAll()` during **low-traffic maintenance windows**.
+* Avoid logging decrypted values.
+* Back up your encryption key table regularly.
+* Never expose encryption keys through APIs or configuration files.
+
+---
+
+## 🚀 Future Enhancements
+
+* Integration with **AWS KMS / Azure Key Vault / GCP Secret Manager**
+* **Automated key rotation scheduler**
+* Encryption audit logging
+* CLI tool for manual re-encryption
+
+---
+
+## 🧾 License & Credits
+
+Developed and maintained by **Tarique Hayat**
+Under **NRT Consultancy Pvt. Ltd.**
+
+**Namespace:** `org.spring.hayat`
+**Artifact:** `spring-boot-starter-data-encryption`
+**Version:** `2.0.4`
+
+© 2025 – **NRT Consultancy Pvt. Ltd. | Secure Data Layer Initiative**
+
+---
