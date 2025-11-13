@@ -41,7 +41,7 @@ Add the following dependency to your Maven `pom.xml`:
 
 ```properties
 spring.nrt-encryption.enabled=true
-spring.nrt-encryption.package-scan=org.spring.nrt.entity
+spring.nrt-encryption.package-scan=org.spring.nrt.entity (Your Entity Package)
 ```
 
 ---
