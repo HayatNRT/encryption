@@ -1,143 +1,146 @@
-# DATA SECURITY & PROTECTION OVERVIEW
+📄 DATA SECURITY & PROTECTION OVERVIEW
 
-##Product: Benefit
+Product: Benefit
+Provider: NRT Consultancy Pvt. Ltd.
+Prepared by: Sachin Prasad
+Version: 1.0
+Date: 18-11-2025
 
-##Provider: NRT Consultancy Pvt. Ltd.
+1. Purpose
 
-##Prepared by: Sachin Prasad
+This document outlines the technical and organizational measures implemented to ensure secure processing, storage, and protection of personal data within the Benefit platform. It demonstrates compliance with GDPR and other data protection regulations. The intended audience includes clients, legal authorities, auditors, security teams, and compliance officers.
 
-##Version: 1.0
+2. Core Security Principles
 
-##Date: 18-11-2025
+Benefit is built on modern data protection and privacy-by-design principles, including:
 
----
+Security by design and by default
 
-## 1. Purpose of This Document
+Encryption at rest and in transit
 
-This document describes the technical and organisational measures implemented to ensure the secure processing, storage, and protection of personal data in compliance with GDPR and related data protection regulations. It is intended for clients, legal bodies, compliance teams, auditors, and security staff.
+Zero plaintext data storage
 
----
+Least-privilege / access-based controls
 
-## 2. Security Principles
+Independent key management
 
-The system is designed around the following principles:
+GDPR-ready data lifecycle
 
-* Security by design and by default
-* Encryption at rest and in transit
-* Zero plaintext storage
-* Least-privilege access controls
-* Separated key management
-* GDPR-ready data lifecycle
-* Support for privacy rights (erasure, access, retention control)
+Support for privacy rights (erasure, access, export, retention)
 
----
+3. Personal Data Encryption
 
-## 3. Encryption of Personal Data
+All sensitive data stored in the system is encrypted using strong, industry-standard AES encryption.
 
-All sensitive data stored in the system is encrypted using strong AES-based encryption.
+Key Highlights
 
-Key points:
+Field-level encryption (sensitive fields are encrypted individually)
 
-* Field-level encryption
-* No raw personal data stored in the database
-* Encrypted data remains encrypted in backups
-* Decryption only happens inside the secured application layer
+No raw personal data in the database
 
-This protects personal data even if a database or backup exposure occurs.
+All backups contain encrypted data only
 
----
+Data is decrypted only inside the secure application layer
 
-## 4. Key Management & Rotation
+This prevents exposure even in the event of unauthorized database access.
 
-* Encryption keys are automatically generated and securely stored
-* Keys are never exposed in configuration files
-* The system supports full **key rotation**
-* During rotation, all encrypted records are securely re-encrypted
-* Write operations are safely locked during rotation to prevent corruption
+4. Encryption Key Management & Rotation
 
----
+The platform includes built-in cryptographic lifecycle management:
 
-## 5. Data Storage & Infrastructure
+Keys are auto-generated and stored securely
 
-* Data is stored in controlled and secure regions
-* Hosting region: [Insert region – e.g., AWS Mumbai / EU Frankfurt / etc.]
-* No personal data exists in plaintext on infrastructure-level systems
-* DB and backup access is restricted and monitored
+Keys are never included in application configuration
 
----
+Full key rotation is supported
 
-## 6. Access Control
+All existing records are re-encrypted during rotation
 
-* Decrypted data is only accessible via authorized backend services
-* Direct DB access does not reveal readable personal data
-* Role-based access control can be enforced
-* Administrative access is strictly limited and logged
+A safe maintenance lock prevents conflicting write operations
 
----
+5. Data Storage & Hosting
 
-## 7. GDPR Anonymisation & User Deletion
+Data is stored only in secure and controlled hosting regions
 
-To comply with GDPR Article 17 (Right to Erasure), the system supports:
+Hosting Region: [Insert region – e.g., AWS Mumbai / EU Frankfurt]
 
-* Removal of personal identifiers
-* Conversion of personal values to anonymised placeholders
-* Preservation of database integrity
-* No remaining personal data after deletion
+No plaintext personal data exists in infrastructure or storage layers
 
-Example of anonymisation:
+Database and backup locations are protected and access-controlled
 
-* Name → "DELETED USER"
-* Email → "deleted_user_[id]@privacy.local"
-* Phone → null
+6. Access Control
 
----
+Decryption only happens within the backend application services
 
-## 8. Logging & Audit
+Direct DB access cannot expose plaintext personal data
 
-* System logs never contain decrypted personal data
-* Only technical and diagnostic information is logged
-* Administrative events (e.g. key rotation, anonymisation) can be audited
-* Sensitive values are not stored or transmitted in logs
+Role-based access control (RBAC) can be enforced
 
----
+Administrative access is restricted and logged
 
-## 9. Backup & Disaster Recovery
+7. GDPR-Compliant Anonymisation & Deletion
 
-* Backups include only encrypted values
-* Backup storage inherits encryption
-* Access to backups is restricted
-* Retention policies are applied in accordance with compliance requirements
+The platform supports GDPR Article 17 (Right to Erasure) through anonymisation-safe deletion:
 
----
+Method:
 
-## 10. AI & GPS Data Handling
+Personal identifiers are permanently removed or replaced
 
-**GPS:**
-The system does not currently store precise geolocation or GPS metadata. If location data is introduced in the future, it will follow the same encryption and minimisation framework.
+Database integrity (foreign keys & history) remains intact
 
-**AI:**
-No personal data is currently used for AI model training or automated decision-making. Future AI usage would require pseudonymisation and compliance safeguards.
+No personal data remains after anonymisation
 
----
+Example:
 
-## 11. Regulatory Compliance Summary
+Name  → DELETED USER
+Email → deleted_user_[id]@privacy.local
+Phone → null
 
-The architecture and security model support:
+8. Logging & Audit Controls
 
-* GDPR Article 5 – Integrity & Confidentiality
-* GDPR Article 17 – Right to Erasure
-* GDPR Article 25 – Privacy by Design
-* GDPR Article 32 – Security of Processing
-* Data minimisation & pseudonymisation requirements
+Logs do not contain decrypted personal data
 
----
+Only non-sensitive operational information is logged
 
-## 12. Responsible Contact
+Sensitive values are never stored in logs
 
-**Security & Data Protection Contact**
+Audit logs can include key rotations and deletion events
+
+9. Backup & Disaster Recovery
+
+All backups contain encrypted data only
+
+Backup access is controlled and monitored
+
+Retention policies follow compliance requirements
+
+Backup restores preserve encryption and privacy
+
+10. AI & GPS Data Handling
+GPS Data
+
+The current version of Benefit does not store or process precise geolocation (GPS).
+If introduced later, location data will follow the same encryption and minimisation policies.
+
+AI / Machine Learning
+
+The system does not use personal data for automated decision-making or AI model training.
+Future implementation, if any, will require pseudonymisation, consent, and regulatory safeguards.
+
+11. Regulatory Compliance Alignment
+
+The Benefit platform aligns with:
+
+GDPR Article	Compliance
+Art. 5	Integrity & Confidentiality
+Art. 17	Right to Erasure
+Art. 25	Privacy by Design & Default
+Art. 32	Security of Processing
+-	Data minimisation & pseudonymisation
+12. Contact Information
+
+Security & Data Protection Contact
 Name: Sachin Prasad
-Email: [psachin.nrt@gmail.com](psachin.nrt@gmail.com)
+Email: psachin.nrt@gmail.com
+
 Company: NRT Consultancy Pvt. Ltd.
-
----
-
