@@ -2,7 +2,7 @@
 
 **Product:** [Benefit]
 **Provider:** NRT Consultancy Pvt. Ltd.
-**Prepared by:** Tarique Hayat
+**Prepared by:** Sachin Prasad
 **Version:** 1.0
 **Date:** [18-11-2025]
 
@@ -131,8 +131,8 @@ The architecture and security model support:
 ## 12. Responsible Contact
 
 **Security & Data Protection Contact**
-Name: Tarique Hayat
-Email: [hayatnrt7@gmail.com](mailto:hayatnrt7@gmail.com)
+Name: Sachin Prasad
+Email: [psachin.nrt@gmail.com](psachin.nrt@gmail.com)
 Company: NRT Consultancy Pvt. Ltd.
 
 ---
